@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initializeFillingSelects() {
     const fillings = getAllFillings();
-    const categories = getCategories();
     
     // Основные селекты начинок
     const selects = ['filling', 'fillingForSize'];
@@ -29,20 +28,12 @@ function initializeFillingSelects() {
         // Очищаем текущие опции (кроме первой)
         select.innerHTML = '<option value="">Выберите начинку</option>';
         
-        // Группируем по категориям
-        categories.forEach(category => {
-            const optgroup = document.createElement('optgroup');
-            optgroup.label = category;
-            
-            const categoryFillings = getFillingsByCategory(category);
-            categoryFillings.forEach(filling => {
-                const option = document.createElement('option');
-                option.value = filling.key;
-                option.textContent = `${filling.name} (плотность: ${filling.density} г/см³)`;
-                optgroup.appendChild(option);
-            });
-            
-            select.appendChild(optgroup);
+        // Добавляем все начинки без группировки
+        fillings.forEach(filling => {
+            const option = document.createElement('option');
+            option.value = filling.key;
+            option.textContent = `${filling.name} (${filling.density} г/см³)`;
+            select.appendChild(option);
         });
     });
 }
@@ -226,6 +217,30 @@ function calculateSize() {
     const fillingKey = document.getElementById('fillingForSize').value;
     const preferredShape = document.getElementById('preferredShape').value;
     
+    // Получаем пользовательские параметры
+    const useCustomParams = document.getElementById('useCustomParams').checked;
+    let customParams = null;
+    
+    if (useCustomParams) {
+        customParams = {
+            minHeight: parseFloat(document.getElementById('minHeight').value) || 4,
+            maxHeight: parseFloat(document.getElementById('maxHeight').value) || 12,
+            minDiameter: parseFloat(document.getElementById('minDiameter').value) || 12,
+            maxDiameter: parseFloat(document.getElementById('maxDiameter').value) || 45,
+            preferredHeights: document.getElementById('preferredHeights').value
+        };
+        
+        // Парсим предпочитаемые высоты
+        if (customParams.preferredHeights.trim()) {
+            customParams.preferredHeights = customParams.preferredHeights
+                .split(',')
+                .map(h => parseFloat(h.trim()))
+                .filter(h => !isNaN(h) && h > 0);
+        } else {
+            customParams.preferredHeights = null;
+        }
+    }
+    
     if (!targetWeight || targetWeight <= 0) {
         showNotification('Введите корректный вес', 'error');
         return;
@@ -237,7 +252,7 @@ function calculateSize() {
     }
     
     try {
-        const result = calculator.calculateSizeFromWeight(targetWeight, fillingKey, preferredShape);
+        const result = calculator.calculateSizeFromWeight(targetWeight, fillingKey, preferredShape, customParams);
         
         if (result.success) {
             displaySizeResult(result);
@@ -362,23 +377,15 @@ function initializeTierFillingSelect(tierNumber) {
     if (!select) return;
     
     const fillings = getAllFillings();
-    const categories = getCategories();
     
     select.innerHTML = '<option value="">Выберите начинку</option>';
     
-    categories.forEach(category => {
-        const optgroup = document.createElement('optgroup');
-        optgroup.label = category;
-        
-        const categoryFillings = getFillingsByCategory(category);
-        categoryFillings.forEach(filling => {
-            const option = document.createElement('option');
-            option.value = filling.key;
-            option.textContent = `${filling.name} (${filling.density} г/см³)`;
-            optgroup.appendChild(option);
-        });
-        
-        select.appendChild(optgroup);
+    // Добавляем все начинки без группировки
+    fillings.forEach(filling => {
+        const option = document.createElement('option');
+        option.value = filling.key;
+        option.textContent = `${filling.name} (${filling.density} г/см³)`;
+        select.appendChild(option);
     });
 }
 
@@ -635,4 +642,18 @@ function showNotification(message, type = 'info') {
             notification.remove();
         }
     }, 4000);
+}
+
+/**
+ * Показать/скрыть дополнительные параметры для расчета размеров
+ */
+function toggleCustomParams() {
+    const checkbox = document.getElementById('useCustomParams');
+    const paramsDiv = document.getElementById('customParams');
+    
+    if (checkbox.checked) {
+        paramsDiv.style.display = 'block';
+    } else {
+        paramsDiv.style.display = 'none';
+    }
 }

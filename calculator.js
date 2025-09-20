@@ -162,7 +162,7 @@ class CakeCalculator {
      * @param {string} preferredShape - предпочитаемая форма ('all', 'round', 'square', 'rectangular')
      * @returns {object} варианты размеров
      */
-    calculateSizeFromWeight(targetWeight, fillingKey, preferredShape = 'all') {
+    calculateSizeFromWeight(targetWeight, fillingKey, preferredShape = 'all', customParams = null) {
         const filling = getFilling(fillingKey);
         if (!filling) {
             throw new Error('Начинка не найдена');
@@ -181,15 +181,15 @@ class CakeCalculator {
 
             // Генерируем варианты для разных форм
             if (preferredShape === 'all' || preferredShape === 'round') {
-                variants.push(...this.generateRoundVariants(requiredVolume, filling));
+                variants.push(...this.generateRoundVariants(requiredVolume, filling, customParams));
             }
 
             if (preferredShape === 'all' || preferredShape === 'square') {
-                variants.push(...this.generateSquareVariants(requiredVolume, filling));
+                variants.push(...this.generateSquareVariants(requiredVolume, filling, customParams));
             }
 
             if (preferredShape === 'all' || preferredShape === 'rectangular') {
-                variants.push(...this.generateRectangularVariants(requiredVolume, filling));
+                variants.push(...this.generateRectangularVariants(requiredVolume, filling, customParams));
             }
 
             return {
@@ -211,16 +211,33 @@ class CakeCalculator {
     /**
      * Генерация вариантов круглых тортов
      */
-    generateRoundVariants(requiredVolume, filling) {
+    generateRoundVariants(requiredVolume, filling, customParams = null) {
         const variants = [];
-        const commonHeights = [4, 5, 6, 7, 8, 10, 12]; // популярные высоты
+        
+        // Определяем высоты для генерации
+        let heights;
+        if (customParams && customParams.preferredHeights) {
+            heights = customParams.preferredHeights;
+        } else {
+            heights = [4, 5, 6, 7, 8, 10, 12]; // популярные высоты по умолчанию
+        }
+        
+        // Ограничения по размерам
+        const minHeight = customParams?.minHeight || 3;
+        const maxHeight = customParams?.maxHeight || 15;
+        const minDiameter = customParams?.minDiameter || 10;
+        const maxDiameter = customParams?.maxDiameter || 50;
 
-        commonHeights.forEach(height => {
+        heights.forEach(height => {
+            // Проверяем ограничения по высоте
+            if (height < minHeight || height > maxHeight) return;
+            
             // Вычисляем диаметр: Volume = π × (d/2)² × h
             // d = 2 × √(Volume / (π × h))
             const diameter = 2 * Math.sqrt(requiredVolume / (this.PI * height));
             
-            if (diameter >= 10 && diameter <= 50) { // разумные ограничения
+            // Проверяем ограничения по диаметру
+            if (diameter >= minDiameter && diameter <= maxDiameter) {
                 const actualVolume = this.calculateRoundVolume(diameter, height);
                 const actualWeight = this.calculateWeight(actualVolume, filling.density);
                 
@@ -242,16 +259,33 @@ class CakeCalculator {
     /**
      * Генерация вариантов квадратных тортов
      */
-    generateSquareVariants(requiredVolume, filling) {
+    generateSquareVariants(requiredVolume, filling, customParams = null) {
         const variants = [];
-        const commonHeights = [4, 5, 6, 7, 8, 10, 12];
+        
+        // Определяем высоты для генерации
+        let heights;
+        if (customParams && customParams.preferredHeights) {
+            heights = customParams.preferredHeights;
+        } else {
+            heights = [4, 5, 6, 7, 8, 10, 12];
+        }
+        
+        // Ограничения по размерам
+        const minHeight = customParams?.minHeight || 3;
+        const maxHeight = customParams?.maxHeight || 15;
+        const minSide = customParams?.minDiameter || 10; // используем minDiameter как minSide
+        const maxSide = customParams?.maxDiameter || 50; // используем maxDiameter как maxSide
 
-        commonHeights.forEach(height => {
+        heights.forEach(height => {
+            // Проверяем ограничения по высоте
+            if (height < minHeight || height > maxHeight) return;
+            
             // Вычисляем сторону: Volume = side² × h
             // side = √(Volume / h)
             const side = Math.sqrt(requiredVolume / height);
             
-            if (side >= 10 && side <= 50) {
+            // Проверяем ограничения по стороне
+            if (side >= minSide && side <= maxSide) {
                 const actualVolume = this.calculateSquareVolume(side, height);
                 const actualWeight = this.calculateWeight(actualVolume, filling.density);
                 
@@ -273,12 +307,29 @@ class CakeCalculator {
     /**
      * Генерация вариантов прямоугольных тортов
      */
-    generateRectangularVariants(requiredVolume, filling) {
+    generateRectangularVariants(requiredVolume, filling, customParams = null) {
         const variants = [];
-        const commonHeights = [4, 5, 6, 7, 8, 10];
+        
+        // Определяем высоты для генерации
+        let heights;
+        if (customParams && customParams.preferredHeights) {
+            heights = customParams.preferredHeights;
+        } else {
+            heights = [4, 5, 6, 7, 8, 10];
+        }
+        
+        // Ограничения по размерам
+        const minHeight = customParams?.minHeight || 3;
+        const maxHeight = customParams?.maxHeight || 15;
+        const minSize = customParams?.minDiameter || 10;
+        const maxSize = customParams?.maxDiameter || 60;
+        
         const aspectRatios = [1.2, 1.4, 1.5, 1.6, 2.0]; // отношения длина/ширина
 
-        commonHeights.forEach(height => {
+        heights.forEach(height => {
+            // Проверяем ограничения по высоте
+            if (height < minHeight || height > maxHeight) return;
+            
             aspectRatios.forEach(ratio => {
                 // Volume = length × width × height
                 // length = ratio × width
@@ -287,7 +338,8 @@ class CakeCalculator {
                 const width = Math.sqrt(requiredVolume / (ratio * height));
                 const length = width * ratio;
                 
-                if (width >= 10 && width <= 40 && length >= 10 && length <= 60) {
+                // Проверяем ограничения по размерам
+                if (width >= minSize && width <= maxSize && length >= minSize && length <= maxSize) {
                     const actualVolume = this.calculateRectangularVolume(length, width, height);
                     const actualWeight = this.calculateWeight(actualVolume, filling.density);
                     
