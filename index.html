@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French Cake Calculator - Калькулятор кондитерской</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎂 French Cake Calculator</h1>
+            <p>Калькулятор для расчета массы и размеров тортов</p>
+        </header>
+
+        <!-- Вкладки для переключения режимов -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('size-to-weight')">Размер → Вес</button>
+            <button class="tab-button" onclick="switchTab('weight-to-size')">Вес → Размер</button>
+            <button class="tab-button" onclick="switchTab('multi-tier')">Многоярусный торт</button>
+        </div>
+
+        <!-- Вкладка: Расчет веса по размерам -->
+        <div id="size-to-weight" class="tab-content active">
+            <h2>Расчет веса торта по размерам</h2>
+            <form id="sizeForm">
+                <div class="input-group">
+                    <label for="cakeShape">Форма торта:</label>
+                    <select id="cakeShape" required>
+                        <option value="">Выберите форму</option>
+                        <option value="round">Круглый</option>
+                        <option value="square">Квадратный</option>
+                        <option value="rectangular">Прямоугольный</option>
+                    </select>
+                </div>
+
+                <div id="sizeInputs">
+                    <!-- Поля ввода размеров появятся здесь в зависимости от выбранной формы -->
+                </div>
+
+                <div class="input-group">
+                    <label for="filling">Начинка:</label>
+                    <select id="filling" required>
+                        <option value="">Выберите начинку</option>
+                    </select>
+                </div>
+
+                <button type="button" onclick="calculateWeight()">Рассчитать вес</button>
+            </form>
+
+            <div id="weightResult" class="result-section" style="display: none;">
+                <h3>Результат расчета:</h3>
+                <div id="weightOutput"></div>
+            </div>
+        </div>
+
+        <!-- Вкладка: Расчет размеров по весу -->
+        <div id="weight-to-size" class="tab-content">
+            <h2>Расчет размеров торта по весу</h2>
+            <form id="weightForm">
+                <div class="input-group">
+                    <label for="targetWeight">Желаемый вес (кг):</label>
+                    <input type="number" id="targetWeight" min="0.1" step="0.1" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="fillingForSize">Начинка:</label>
+                    <select id="fillingForSize" required>
+                        <option value="">Выберите начинку</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="preferredShape">Предпочитаемая форма (или все варианты):</label>
+                    <select id="preferredShape">
+                        <option value="all">Все варианты</option>
+                        <option value="round">Только круглые</option>
+                        <option value="square">Только квадратные</option>
+                        <option value="rectangular">Только прямоугольные</option>
+                    </select>
+                </div>
+
+                <button type="button" onclick="calculateSize()">Рассчитать размеры</button>
+            </form>
+
+            <div id="sizeResult" class="result-section" style="display: none;">
+                <h3>Варианты размеров:</h3>
+                <div id="sizeOutput"></div>
+            </div>
+        </div>
+
+        <!-- Вкладка: Многоярусный торт -->
+        <div id="multi-tier" class="tab-content">
+            <h2>Многоярусный торт</h2>
+            <div class="input-group">
+                <label for="tierCount">Количество ярусов:</label>
+                <input type="number" id="tierCount" min="2" max="5" value="2" onchange="generateTierInputs()">
+            </div>
+
+            <div id="tierInputs">
+                <!-- Поля для каждого яруса появятся здесь -->
+            </div>
+
+            <button type="button" onclick="calculateMultiTier()">Рассчитать многоярусный торт</button>
+
+            <div id="multiTierResult" class="result-section" style="display: none;">
+                <h3>Результат расчета многоярусного торта:</h3>
+                <div id="multiTierOutput"></div>
+            </div>
+        </div>
+
+        <!-- Инструкции -->
+        <div class="instructions">
+            <h3>📋 Инструкция по использованию:</h3>
+            <div class="instruction-tabs">
+                <button class="instruction-tab active" onclick="showInstructions('basic')">Основы</button>
+                <button class="instruction-tab" onclick="showInstructions('formulas')">Формулы</button>
+                <button class="instruction-tab" onclick="showInstructions('tips')">Советы</button>
+            </div>
+            
+            <div id="basic-instructions" class="instruction-content active">
+                <h4>Как пользоваться калькулятором:</h4>
+                <ol>
+                    <li><strong>Размер → Вес:</strong> Выберите форму торта, введите размеры и начинку - получите точный вес</li>
+                    <li><strong>Вес → Размер:</strong> Введите желаемый вес и начинку - получите варианты размеров</li>
+                    <li><strong>Многоярусный:</strong> Задайте количество ярусов и параметры каждого - получите общий расчет</li>
+                </ol>
+            </div>
+            
+            <div id="formulas-instructions" class="instruction-content">
+                <h4>Формулы расчета:</h4>
+                <ul>
+                    <li><strong>Круглый торт:</strong> Объем = π × (диаметр/2)² × высота</li>
+                    <li><strong>Квадратный торт:</strong> Объем = сторона × сторона × высота</li>
+                    <li><strong>Прямоугольный торт:</strong> Объем = длина × ширина × высота</li>
+                    <li><strong>Вес:</strong> Объем × плотность начинки</li>
+                </ul>
+            </div>
+            
+            <div id="tips-instructions" class="instruction-content">
+                <h4>Полезные советы:</h4>
+                <ul>
+                    <li>Все размеры вводятся в сантиметрах</li>
+                    <li>Вес рассчитывается в килограммах</li>
+                    <li>Плотность начинки влияет на итоговый вес</li>
+                    <li>Для многоярусных тортов каждый ярус рассчитывается отдельно</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="fillings.js"></script>
+    <script src="calculator.js"></script>
+    <script src="ui.js"></script>
+</body>
+</html>
